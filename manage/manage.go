@@ -27,7 +27,7 @@ func Start(vm vm.VM, ram int, isoFile string) error {
 		"qemu-system-x86_64",
 		"-drive", fmt.Sprintf("file=%s,format=%s", vm.GetImageFile(), vm.ImageType),
 		"-m", fmt.Sprintf("%dG", ram),
-		"-pidfile", vm.GetProcessIdFile(),
+		// "-pidfile", vm.GetProcessIdFile(),
 		"-cdrom", isoFile,
 		"-enable-kvm",
 		"-cpu", "host",
@@ -72,7 +72,6 @@ func Stop(vm vm.VM) error {
 func Delete(vm vm.VM) error {
 	log.Printf("Deleting VM %s", vm.Name)
 	return errors.Join(
-		os.Remove(vm.GetProcessIdFile()),
 		os.Remove(vm.GetImageFile()),
 		os.Remove(vm.GetSocketFile()),
 	)
