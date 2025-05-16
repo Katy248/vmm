@@ -2,10 +2,10 @@ package manage
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"vmm/manage/cmd"
 	"vmm/manage/qmp"
 	"vmm/vm"
 )
@@ -15,7 +15,8 @@ func Init(vm vm.VM, diskSize int) error {
 		"qemu-img", "create",
 		"-f", string(vm.ImageType),
 		vm.GetImageFile(),
-		fmt.Sprintf("%dG", diskSize))
+		diskSizeFlag(diskSize),
+	)
 	{
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -23,23 +24,15 @@ func Init(vm vm.VM, diskSize int) error {
 	return cmd.Run()
 }
 func Start(vm vm.VM, ram int, isoFile string) error {
-	cmd := exec.Command(
-		"qemu-system-x86_64",
-		"-drive", fmt.Sprintf("file=%s,format=%s", vm.GetImageFile(), vm.ImageType),
-		"-m", fmt.Sprintf("%dG", ram),
-		// "-pidfile", vm.GetProcessIdFile(),
-		"-cdrom", isoFile,
-		"-enable-kvm",
-		"-cpu", "host",
-		"-qmp", fmt.Sprintf("unix:%s,server,nowait", vm.GetSocketFile()),
-		"-machine", "q35",
-		"-daemonize",
+	return cmd.ExecStartDaemonize(
+		cmd.StartData{
+			ImageFile:  vm.GetImageFile(),
+			ImageType:  vm.ImageType,
+			SocketFile: vm.GetSocketFile(),
+			RamInGb:    ram,
+			IsoFile:    isoFile,
+		},
 	)
-	{
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	return cmd.Run()
 }
 
 func GetStatus(vm vm.VM) (*qmp.VMStatus, error) {
